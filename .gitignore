@@ -1,0 +1,27 @@
+# OpenSCAD source repo: ignore generated outputs and local junk
+
+*.bak
+*~
+*.swp
+*.swo
+
+.DS_Store
+Thumbs.db
+
+*.stl
+*.3mf
+*.amf
+*.obj
+*.off
+*.dxf
+*.svg
+*.gcode
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+.vscode/
+.idea/
