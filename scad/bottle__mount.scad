@@ -26,10 +26,10 @@ size_1 = [section_1_x, section_1_y];
 size_2 = [section_2_x, section_2_y];
 size_full = [plate_full_x, plate_full_y];
 
-section_1_cyl_translate_x = size_0[0];
-section_1_cyl_translate_y = (outer_width - inner_width) / 2;
+section_1_translate_x = size_0[0];
+section_1_translate_y = (outer_width - inner_width) / 2;
 
-section_2_cyl_translate_x = size_0[0] + size_1[0];
+section_2_translate_x = size_0[0] + size_1[0];
 
 corner_radius = 3;
 
@@ -53,10 +53,10 @@ module base_plate_profile_2d() {
     union() {
         rect_2d(size_0);
 
-        translate([section_1_cyl_translate_x, section_1_cyl_translate_y])
+        translate([section_1_translate_x, section_1_translate_y])
             rect_2d(size_1);
 
-        translate([section_2_cyl_translate_x, 0])
+        translate([section_2_translate_x, 0])
             rect_2d(size_2);
     }
 }
@@ -95,17 +95,17 @@ module base_plate_3d() {
 // until it becomes the full rectangle.
 module transition_profile_2d(t, r=3) {
     current_middle_y = inner_width + (outer_width - inner_width) * t;
-    current_middle_cyl_translate_y = (outer_width - current_middle_y) / 2;
+    current_middle_translate_y = (outer_width - current_middle_y) / 2;
 
     offset(r = r)
         offset(delta = -r)
             union() {
                 rect_2d(size_0);
 
-                translate([section_1_cyl_translate_x, current_middle_cyl_translate_y])
+                translate([section_1_translate_x, current_middle_translate_y])
                     square([section_1_x, current_middle_y], center = false);
 
-                translate([section_2_cyl_translate_x, 0])
+                translate([section_2_translate_x, 0])
                     rect_2d(size_2);
             }
 }
@@ -129,14 +129,16 @@ module bottle_holder_3d() {
             rounded_bottle_holder_2d(corner_radius);
 }
 
-cyl_translate_x = -5;
-cyl_translate_y = outer_width / 2;
-cyl_translate_z = 76.1;
-
-cyl_translate_vector = [cyl_translate_x, cyl_translate_y, cyl_translate_z];
-
 cylinder_length = overall_length + 10;
 cylinder_radius = 38.1;
+
+base_to_cylinder_bottom_z = 30;
+
+cyl_translate_x = -5;
+cyl_translate_y = outer_width / 2;
+cyl_translate_z = base_to_cylinder_bottom_z + cylinder_radius;
+
+cyl_translate_vector = [cyl_translate_x, cyl_translate_y, cyl_translate_z];
 
 cylinder_size = [cylinder_length, cylinder_radius];
 
