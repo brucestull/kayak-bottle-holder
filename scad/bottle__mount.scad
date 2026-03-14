@@ -1,168 +1,198 @@
 $fn = 80;
 
-outer_width = 95.2;
-inner_width = 69.8;
 
-overall_length = 69.9 + 41.3 + 58.7;
+// ============================================================
+// Overall part dimensions
+// ============================================================
+part_outer_width = 95.2;     // full outside width in Y
+part_inner_width = 69.8;     // narrowed center width in Y
 
-height = 35;
-transition_height = 10;
-bottle_holder_height = 63 - height - transition_height;
+part_left_length   = 69.9 - 1;
+part_center_length = 41.3 + 1 + 1;   // derived below if preferred
+part_right_length  = 58.7 - 1;
 
-section_0_x = 69.9 - 1;
-section_0_y = outer_width;
-
-section_2_x = 58.7 - 1;
-section_2_y = outer_width;
-
-section_1_x = overall_length - section_0_x - section_2_x;
-section_1_y = inner_width;
-
-plate_full_x = overall_length;
-plate_full_y = outer_width;
-
-size_0 = [section_0_x, section_0_y];
-size_1 = [section_1_x, section_1_y];
-size_2 = [section_2_x, section_2_y];
-size_full = [plate_full_x, plate_full_y];
-
-section_1_translate_x = size_0[0];
-section_1_translate_y = (outer_width - inner_width) / 2;
-
-section_2_translate_x = size_0[0] + size_1[0];
-
-corner_radius = 3;
-
-// Controls smoothness of transition
-num_slices = 70;   // more slices = smoother, slower preview
-slice_height = transition_height / num_slices;
+part_total_length = 69.9 + 41.3 + 58.7;
 
 
-// --------------------
+// ============================================================
+// Vertical stack heights (Z)
+// ============================================================
+base_height = 35;                  // lower base section
+transition_band_height = 10;       // widening transition zone
+total_part_height = 63;            // full final height
+
+upper_wall_height = total_part_height - base_height - transition_band_height;
+// = 18
+
+
+// ============================================================
+// Horizontal footprint sections (XY)
+// ============================================================
+left_section_size = [69.9 - 1, part_outer_width];
+right_section_size = [58.7 - 1, part_outer_width];
+
+center_section_length = part_total_length - left_section_size[0] - right_section_size[0];
+center_section_size_narrow = [center_section_length, part_inner_width];
+
+full_top_rectangle_size = [part_total_length, part_outer_width];
+
+
+// ============================================================
+// Section placement in XY
+// ============================================================
+center_section_x = left_section_size[0];
+center_section_y_narrow_offset = (part_outer_width - part_inner_width) / 2;
+
+right_section_x = left_section_size[0] + center_section_size_narrow[0];
+
+
+// ============================================================
+// Corner rounding
+// ============================================================
+profile_corner_radius = 3;
+
+
+// ============================================================
+// Transition smoothness
+// ============================================================
+transition_slice_count = 70;
+transition_slice_height = transition_band_height / transition_slice_count;
+
+
+// ============================================================
+// Bottle cradle cylinder cut
+// ============================================================
+cradle_cut_radius = 38.1;
+cradle_cut_length = part_total_length + 10;
+
+// where the *bottom* of the cylinder first appears in Z
+cradle_cut_bottom_z = 30;
+
+// cylinder center position
+cradle_cut_center_x = -5;
+cradle_cut_center_y = part_outer_width / 2;
+cradle_cut_center_z = cradle_cut_bottom_z + cradle_cut_radius;
+
+cradle_cut_center = [
+    cradle_cut_center_x,
+    cradle_cut_center_y,
+    cradle_cut_center_z
+];
+
+cradle_cut_size = [cradle_cut_length, cradle_cut_radius];
+
+
+// ============================================================
 // Helpers
-// --------------------
+// ============================================================
 module rect_2d(sz) {
     square(sz, center = false);
 }
 
 
-// --------------------
-// Base plate 2D profile
-// --------------------
-module base_plate_profile_2d() {
+// ============================================================
+// Base footprint profile (narrow center)
+// ============================================================
+module base_profile_2d() {
     union() {
-        rect_2d(size_0);
+        rect_2d(left_section_size);
 
-        translate([section_1_translate_x, section_1_translate_y])
-            rect_2d(size_1);
+        translate([center_section_x, center_section_y_narrow_offset])
+            rect_2d(center_section_size_narrow);
 
-        translate([section_2_translate_x, 0])
-            rect_2d(size_2);
+        translate([right_section_x, 0])
+            rect_2d(right_section_size);
     }
 }
 
-module rounded_base_plate_profile_2d(r=3) {
+module rounded_base_profile_2d(r = profile_corner_radius) {
     offset(r = r)
         offset(delta = -r)
-            base_plate_profile_2d();
+            base_profile_2d();
 }
 
 
-// --------------------
-// Bottle holder 2D profile
-// --------------------
-module bottle_holder_2d() {
-    rect_2d(size_full);
+// ============================================================
+// Full-width top profile
+// ============================================================
+module full_top_profile_2d() {
+    rect_2d(full_top_rectangle_size);
 }
 
-module rounded_bottle_holder_2d(r=3) {
+module rounded_full_top_profile_2d(r = profile_corner_radius) {
     offset(r = r)
         offset(delta = -r)
-            bottle_holder_2d();
+            full_top_profile_2d();
 }
 
 
-// --------------------
-// 3D solids
-// --------------------
-module base_plate_3d() {
-    linear_extrude(height = height)
-        rounded_base_plate_profile_2d(corner_radius);
-}
-
-
-// This profile gradually widens the center section in Y
-// until it becomes the full rectangle.
-module transition_profile_2d(t, r=3) {
-    current_middle_y = inner_width + (outer_width - inner_width) * t;
-    current_middle_translate_y = (outer_width - current_middle_y) / 2;
+// ============================================================
+// Transition profile
+// Gradually widens the center section from inner width to outer width
+// ============================================================
+module transition_profile_2d(t, r = profile_corner_radius) {
+    current_center_width = part_inner_width + (part_outer_width - part_inner_width) * t;
+    current_center_y_offset = (part_outer_width - current_center_width) / 2;
 
     offset(r = r)
         offset(delta = -r)
             union() {
-                rect_2d(size_0);
+                rect_2d(left_section_size);
 
-                translate([section_1_translate_x, current_middle_translate_y])
-                    square([section_1_x, current_middle_y], center = false);
+                translate([center_section_x, current_center_y_offset])
+                    square([center_section_size_narrow[0], current_center_width], center = false);
 
-                translate([section_2_translate_x, 0])
-                    rect_2d(size_2);
+                translate([right_section_x, 0])
+                    rect_2d(right_section_size);
             }
 }
 
 
-// Stacked slices for a visually smooth transition
-module transition_3d() {
-    for (potato_brainz = [0 : num_slices - 1]) {
-        t = potato_brainz / (num_slices - 1);
+// ============================================================
+// 3D solids
+// ============================================================
+module base_3d() {
+    linear_extrude(height = base_height)
+        rounded_base_profile_2d();
+}
 
-        translate([0, 0, height + potato_brainz * slice_height])
-            linear_extrude(height = slice_height + 0.001)
-                transition_profile_2d(t, corner_radius);
+module transition_3d() {
+    for (slice_index = [0 : transition_slice_count - 1]) {
+        t = slice_index / (transition_slice_count - 1);
+
+        translate([0, 0, base_height + slice_index * transition_slice_height])
+            linear_extrude(height = transition_slice_height + 0.001)
+                transition_profile_2d(t);
     }
 }
 
-
-module bottle_holder_3d() {
-    translate([0, 0, height + transition_height])
-        linear_extrude(height = bottle_holder_height)
-            rounded_bottle_holder_2d(corner_radius);
+module upper_wall_3d() {
+    translate([0, 0, base_height + transition_band_height])
+        linear_extrude(height = upper_wall_height)
+            rounded_full_top_profile_2d();
 }
 
-cylinder_length = overall_length + 10;
-cylinder_radius = 38.1;
-
-base_to_cylinder_bottom_z = 30;
-
-cyl_translate_x = -5;
-cyl_translate_y = outer_width / 2;
-cyl_translate_z = base_to_cylinder_bottom_z + cylinder_radius;
-
-cyl_translate_vector = [cyl_translate_x, cyl_translate_y, cyl_translate_z];
-
-cylinder_size = [cylinder_length, cylinder_radius];
-
-module special_cylinder(sz) {
+module cradle_cut_cylinder(sz) {
     cylinder(h = sz[0], r = sz[1], center = false);
 }
 
-module three_parts() {
+module positive_solid() {
     union() {
-        base_plate_3d();
+        base_3d();
         transition_3d();
-        bottle_holder_3d();
+        upper_wall_3d();
     }
 }
 
 
-// --------------------
-// Render
-// --------------------
+// ============================================================
+// Final render
+// ============================================================
 difference() {
-    three_parts();
+    positive_solid();
 
-    translate(cyl_translate_vector) {
+    translate(cradle_cut_center) {
         rotate([0, 90, 0])
-            special_cylinder(cylinder_size);
+            cradle_cut_cylinder(cradle_cut_size);
     }
 }
