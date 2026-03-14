@@ -19,7 +19,7 @@ part_total_length = 69.9 + 41.3 + 58.7;
 // ============================================================
 base_height = 35;                  // lower base section
 transition_band_height = 10;       // widening transition zone
-total_part_height = 63;            // full final height
+total_part_height = 55;            // full final height
 
 upper_wall_height = total_part_height - base_height - transition_band_height;
 // = 18
