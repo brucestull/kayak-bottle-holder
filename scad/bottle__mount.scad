@@ -185,6 +185,72 @@ module positive_solid() {
 }
 
 
+// `total_part_height` will be used for `block_z`
+module cord_hole_solid(t_vector, hole_dia, block_z, z_overage) {
+    translate(t_vector)
+    cylinder(h = block_z + (z_overage * 2), d = hole_dia, center = false);
+};
+
+module cord_channel_solid(t_vector, channel_dims, z_drop = 0) {
+    translate([0, 0, z_drop]) {
+        translate(t_vector)
+        cube(channel_dims, center = false);
+    };
+};
+
+// ============================================================
+// Create cord holes in mount
+// ============================================================
+
+cord_hole_diameter = 6;
+
+outer_edge_to_hole_center = 7;
+
+cord_z_overage = 2;
+
+hole_near_y = outer_edge_to_hole_center;
+hole_far_y = part_outer_width - outer_edge_to_hole_center;
+
+hole_bow_x = 139;  // Center of the hole
+hole_stern_x = 44;  // Center of the hole
+
+hole_01_translate = [hole_stern_x, hole_near_y, -cord_z_overage];
+hole_02_translate = [hole_bow_x, hole_near_y, -cord_z_overage];
+hole_03_translate = [hole_stern_x, hole_far_y, -cord_z_overage];
+hole_04_translate = [hole_bow_x, hole_far_y, -cord_z_overage];
+
+
+// ============================================================
+// Create cord bottom channels
+// ============================================================
+
+
+// These are for the translation of the channels
+channel_01_tx = hole_stern_x - (cord_hole_diameter / 2);
+channel_02_tx = hole_bow_x - (cord_hole_diameter / 2);
+
+channel_01_ty = hole_near_y;
+channel_02_ty = hole_near_y;
+
+channel_z_drop = -4;
+
+channel_01_tz = channel_z_drop;
+channel_02_tz = channel_z_drop;
+
+channel_01_translate = [channel_01_tx, channel_01_ty, channel_01_tz];
+channel_02_translate = [channel_02_tx, channel_02_ty, channel_02_tz];
+
+// These are for the dimensions of the channels
+
+channel_x = cord_hole_diameter;
+channel_y = cord_hole_diameter;
+channel_z = cord_hole_diameter - channel_z_drop;
+
+
+channel_01_dims = [channel_x, hole_far_y - hole_near_y, channel_z];
+channel_02_dims = [channel_x, hole_far_y - hole_near_y, channel_z];
+
+
 // ============================================================
 // Final render
 // ============================================================
@@ -195,4 +261,15 @@ difference() {
         rotate([0, 90, 0])
             cradle_cut_cylinder(cradle_cut_size);
     }
+
+    // Remove verticle cylinders for paracord passage
+    cord_hole_solid(hole_01_translate, cord_hole_diameter, total_part_height, cord_z_overage);
+    cord_hole_solid(hole_02_translate, cord_hole_diameter, total_part_height, cord_z_overage);
+    cord_hole_solid(hole_03_translate, cord_hole_diameter, total_part_height, cord_z_overage);
+    cord_hole_solid(hole_04_translate, cord_hole_diameter, total_part_height, cord_z_overage);
+
+    // Remove bottom channels for paracord passage
+    cord_channel_solid(channel_01_translate, channel_01_dims);
+    cord_channel_solid(channel_02_translate, channel_02_dims);
 }
+
