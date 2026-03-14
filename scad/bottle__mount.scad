@@ -1,4 +1,4 @@
-$fn = 80;
+$fn = 40;
 
 
 // ============================================================
@@ -198,6 +198,18 @@ module cord_channel_solid(t_vector, channel_dims, z_drop = 0) {
     };
 };
 
+module make_screw_hole_solid(t_vector, clearance_dia) {
+    translate(t_vector)
+
+    // Screw clearance hole
+    cylinder(h = plastic_body_height + screw_clearance_z_overage, d = clearance_dia, center = false);
+};
+
+module make_counterbore_hole_solid(t_vector, clearance_dia, clearance_height) {
+    translate(t_vector)
+    cylinder(h = clearance_height, d = clearance_dia);
+};
+
 // ============================================================
 // Create cord holes in mount
 // ============================================================
@@ -252,8 +264,64 @@ channel_02_dims = [channel_x, hole_far_y - hole_near_y, channel_z];
 
 
 // ============================================================
+// Screw holes for mounting to kayak
+// ============================================================
+
+// These are for the dimensions of the screw holes
+plastic_body_height = 30;
+
+screw_head_z = 25;
+screw_head_clearance_height = 5;
+rivet_nut_clearance_height = 2;
+
+screw_hole_clearance_diameter = 3.4;
+washer_clearance_diameter = 8.5;
+rivet_nut_clearance_diameter = 11;
+
+screw_clearance_z_overage = 4;
+screw_drop_z = -screw_clearance_z_overage / 2;
+
+rivet_nut_drop_z = 2;
+
+// These are for the translation of the screw holes
+
+screw_hole_01_tx = part_left_length / 2;
+screw_hole_01_ty = part_outer_width / 2;
+screw_hole_01_tz = screw_drop_z;
+
+screw_hole_02_x_adjust = 15;
+
+screw_hole_02_tx = part_left_length + part_center_length + (part_right_length / 2) - screw_hole_02_x_adjust;
+screw_hole_02_ty = part_outer_width / 2;
+screw_hole_02_tz = screw_drop_z;
+
+screw_hole_01_translate = [screw_hole_01_tx, screw_hole_01_ty, screw_hole_01_tz];
+screw_hole_02_translate = [screw_hole_02_tx, screw_hole_02_ty, screw_hole_02_tz];
+
+
+screw_head_hole_01_tx = part_left_length / 2;
+screw_head_hole_01_ty = part_outer_width / 2;
+screw_head_hole_01_tz = screw_head_z;
+
+screw_head_hole_01_translate = [screw_head_hole_01_tx, screw_head_hole_01_ty, screw_head_hole_01_tz];
+
+
+screw_head_hole_02_tx = part_left_length + part_center_length + (part_right_length / 2) - screw_hole_02_x_adjust;
+screw_head_hole_02_ty = part_outer_width / 2;
+screw_head_hole_02_tz = screw_head_z;
+
+screw_head_hole_02_translate = [screw_head_hole_02_tx, screw_head_hole_02_ty, screw_head_hole_02_tz];
+
+
+// ============================================================
+// Gap filler cups
+// ============================================================
+
+
+// ============================================================
 // Final render
 // ============================================================
+
 difference() {
     positive_solid();
 
@@ -271,5 +339,15 @@ difference() {
     // Remove bottom channels for paracord passage
     cord_channel_solid(channel_01_translate, channel_01_dims);
     cord_channel_solid(channel_02_translate, channel_02_dims);
+
+    // Remove screw clearances
+    make_screw_hole_solid(screw_hole_01_translate, screw_hole_clearance_diameter);
+    make_counterbore_hole_solid(screw_hole_01_translate, rivet_nut_clearance_diameter, rivet_nut_clearance_height - screw_drop_z);
+    
+    make_screw_hole_solid(screw_hole_02_translate, screw_hole_clearance_diameter);
+    make_counterbore_hole_solid(screw_hole_02_translate, rivet_nut_clearance_diameter, rivet_nut_clearance_height - screw_drop_z);
+    
+    make_counterbore_hole_solid(screw_head_hole_01_translate, washer_clearance_diameter, screw_head_clearance_height + screw_clearance_z_overage);
+    make_counterbore_hole_solid(screw_head_hole_02_translate, washer_clearance_diameter, screw_head_clearance_height + screw_clearance_z_overage);
 }
 
