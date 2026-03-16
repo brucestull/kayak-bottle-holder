@@ -91,7 +91,7 @@ module base_3d(thickness = plate_thickness, corner_radius = profile_corner_radiu
 // SCREW HOLE PARAMETERS
 // ============================================================
 screw_hole_02_x_adjust = 15;
-rivet_nut_hole_dia = 5.10;
+rivet_nut_hole_dia = 5.36;
 
 screw_x_positions = [
     part_left_length / 2,
